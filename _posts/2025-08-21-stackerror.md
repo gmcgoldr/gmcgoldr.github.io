@@ -6,34 +6,30 @@ author: null
 
 # Ergonomic errors in Rust: write fast, debug with ease, handle precisely
 
-Errors show up in three distinct contexts: when you’re writing code, when you’re debugging code, and at runtime when the program needs to handle recoverable errors. And errors are consumed by two distinct consumers  with different needs: the developer debugging an application, and the caller making error handling decisions at runtime.
+You're starting a new Rust project and hit your first fallible function. What do you do with the `Result`? The quickest path is `Result<T, Box<dyn Error>>` and lots of `?`. That works until you're debugging code and need more context. Then you reach for `anyhow` and enjoy easy propagation, until you need to handle a specific error at runtime and end up downcasting. So you try `thiserror` for precise matching, only to find yourself designing enums and mapping every call site. None of these are wrong, but each has sharp edges at different points.
 
-In this post, we'll explore how [stackerror](https://crates.io/crates/stackerror) is designed to make working in all three contexts easy while providing rich debugging context for developers and structured codes for runtime error-handling. 
+Errors show up in three contexts: writing code, debugging failures, and handling recoverable cases at runtime. And they serve two different consumers: the developer who needs rich context, and the caller who needs a stable signal to branch on. Many approaches conflate those needs, stuffing debugging detail and runtime control data into the same variant or payload. The result: slower writing, noisy debugging, and brittle runtime handling.
 
-In Rust, different tools tend to optimize for some but not all three of these contexts: bare `Result<T, &'static str>` is quick to type but thin on context; `anyhow` speeds propagation and allows you to easily add debug-friendly context, yet pushes you toward downcasts when you need to handle errors at runtime; `thiserror` gives you matchable variants for robust runtime handling but requires additional upfront work when writing errors.
+[stackerror](https://crates.io/crates/stackerror) handles these situations without ceremony. You write quickly: wrap or create errors in place and keep using `?`. Debugging stays clear: messages stack as errors propagate, giving you readable breadcrumbs. Runtime handling is precise: branch on lightweight error codes (e.g., `std::io::ErrorKind`, HTTP `StatusCode`, or your own) while exposing a single opaque error type that implements `std::error::Error`.
 
-These tools can also conflate the two consumers of errors: error variants often pack data for both debugging and for error handling. But deciding how to handle a recoverable error usually doesn’t require fully structured payloads, just an error code. This pattern of exposing an error code for error handling is used widely across Rust’s ecosystem: `std::io::Error` exposes an `ErrorKind`, `serde_json::Error` has a `Category`, and HTTP clients surface `StatusCode`.
-
-Using [stackerror](https://crates.io/crates/stackerror) you can attach human-readable messages right where failures occur with minimal boilerplate; your errors stack to provide rich context for debugging; you get structured error codes for control flow (HTTP status codes, `std::io::ErrorKind`, or your own); and your library can expose a single opaque error type that implements `std::error::Error`.
-
-To make things concrete, this post builds up a small working covering IO, HTTP handling, and simple retries. Stick around (or scroll down) to the end to see it.
+In this post, we’ll show how to write fast, debug with ease, and handle precisely with `stackerror`, using a small example that touches IO, HTTP, and simple retries. Or skip ahead to the full snippet at the end.
 
 ## Rough edges
 
 Rust has several mature error libraries, each with clear strengths and a few rough edges depending on your needs. Here’s a quick tour of a common error handling journey and the pain points you might experience along the way.
 
-### Starting simple with static strings
+### Starting simple with `Box<dyn Error>`
 
-It’s fast to write and easy to read. But your debug info is only as good as your static strings, and it’s hard to propagate detail. The typical pattern erases context:
+It’s fast to write and easy to propagate with `?`. But you only get the upstream error message, there’s no stacked breadcrumb or backtrace by default.
 
 ```rust
-fn read_config() -> Result<String, &'static str> {
-    std::fs::read_to_string("config.json")
-        .map_err(|_| "read failed")
+fn read_config() -> Result<String, Box<dyn Error>> {
+    let text = std::fs::read_to_string("config.json")?;
+    Ok(text)
 }
 ```
 
-When this fails, you’ve lost all context about why it failed: was it a permission error, is the file missing, etc.?
+When this fails, you see only the source error; there’s no context about what you were doing when it happened. If the file is missing, you'll simply get an error message: "No such file or directory". You don't know which file operation returned this error.
 
 ### Leveling up: anyhow
 
@@ -44,7 +40,7 @@ use anyhow::{Context, Result};
 
 fn read_config() -> Result<String> {
     std::fs::read_to_string("config.json")
-        .context("read failed")
+        .context("failed to read config.json")
 }
 ```
 
