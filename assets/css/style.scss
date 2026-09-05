@@ -83,6 +83,8 @@ hr { background: var(--line); margin: 2rem 0; }
   .site-shell { grid-template-columns: 190px minmax(0, 1fr); column-gap: 40px; padding: 44px 28px 24px; }
 }
 @media (max-width: 720px) {
+  .post-page .bio { display: none; }
+  .post-page .profile nav { margin-top: 16px; }
   .site-shell { display: block; padding: 28px 22px 24px; }
   .profile { position: static; border-bottom: 1px solid var(--line); padding: 0 0 26px; margin-bottom: 32px; }
   .site-name { font-size: 24px; }

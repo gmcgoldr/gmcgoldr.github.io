@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
     {% include head-custom.html %}
   </head>
-  <body>
+  <body{% if page.collection == 'posts' %} class="post-page"{% endif %}>
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-shell">
       <header class="profile">
