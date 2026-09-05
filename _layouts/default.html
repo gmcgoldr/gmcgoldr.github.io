@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'en' }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% seo %}
+    <meta name="theme-color" content="#f8f6f0">
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    {% include head-custom.html %}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="site-shell">
+      <header class="profile">
+        <a class="site-name" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+        <p class="bio">{{ site.description | escape }}</p>
+        <nav aria-label="Main navigation">
+          <a href="{{ '/' | relative_url }}"{% if page.is_home %} aria-current="page"{% endif %}>Writing</a>
+          <a href="{{ site.profile.github }}">GitHub <span aria-hidden="true">↗</span></a>
+          <a href="{{ site.profile.linkedin }}">LinkedIn <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+      <main id="main" tabindex="-1">
+        {% if page.collection == 'posts' %}
+        <div class="article-meta">
+          <a href="{{ '/' | relative_url }}">← All writing</a>
+          <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time>
+        </div>
+        <article class="prose">{{ content }}</article>
+        <div class="article-end"><a href="{{ '/' | relative_url }}">← Back to all writing</a></div>
+        {% else %}
+        {{ content }}
+        {% endif %}
+      </main>
+      <footer class="site-footer">{{ site.title | escape }} <span aria-hidden="true">·</span> Notes in progress.<br><small>Hosted on GitHub Pages. Based on <a href="https://github.com/orderedlist/minimal">Minimal</a>.</small></footer>
+    </div>
+  </body>
+</html>
