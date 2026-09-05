@@ -15,7 +15,7 @@
         <a class="site-name" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
         <p class="bio">{{ site.description | escape }}</p>
         <nav aria-label="Main navigation">
-          <a href="{{ '/' | relative_url }}"{% if page.is_home %} aria-current="page"{% endif %}>Writing</a>
+          <a href="{{ '/' | relative_url }}"{% if page.is_home %} aria-current="page"{% endif %}>Posts</a>
           <a href="{{ site.profile.github }}">GitHub <span aria-hidden="true">↗</span></a>
           <a href="{{ site.profile.linkedin }}">LinkedIn <span aria-hidden="true">↗</span></a>
         </nav>
@@ -23,11 +23,11 @@
       <main id="main" tabindex="-1">
         {% if page.collection == 'posts' %}
         <div class="article-meta">
-          <a href="{{ '/' | relative_url }}">← All writing</a>
+          <a href="{{ '/' | relative_url }}">← All posts</a>
           <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time>
         </div>
         <article class="prose">{{ content }}</article>
-        <div class="article-end"><a href="{{ '/' | relative_url }}">← Back to all writing</a></div>
+        <div class="article-end"><a href="{{ '/' | relative_url }}">← Back to all posts</a></div>
         {% else %}
         {{ content }}
         {% endif %}

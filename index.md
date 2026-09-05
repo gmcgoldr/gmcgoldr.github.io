@@ -1,14 +1,10 @@
 ---
 layout: default
-title: Writing
+title: Posts
 is_home: true
 ---
 
-<div class="index-header">
-  <p class="eyebrow">Notes &amp; essays</p>
-  <h1>Working things out.</h1>
-  <p>Explorations in machine learning, software, and the ideas underneath.</p>
-</div>
+<h1 class="index-title">Posts</h1>
 
 <ul class="post-list">
 {% for post in site.posts %}
