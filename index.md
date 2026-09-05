@@ -12,12 +12,11 @@ is_home: true
 
 <ul class="post-list">
 {% for post in site.posts %}
-  {% assign post_heading = post.content | split: '
-' | first | remove_first: '# ' | strip %}
+  {% assign post_heading = post.content | markdownify | split: '</h1>' | first | strip_html | normalize_whitespace | strip %}
   {% assign post_title = post_heading | default: post.title %}
   <li class="post-item">
     <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %-d, %Y" }}</time>
-    <h2><a href="{{ post.url | relative_url }}">{{ post_title | escape }}</a></h2>
+    <h2><a href="{{ post.url | relative_url }}">{{ post_title | escape_once }}</a></h2>
     <p>{{ post.content | markdownify | split: '<p>' | slice: 1, 1 | join: '' | split: '</p>' | first | strip_html | normalize_whitespace | truncatewords: 32 | escape_once }}</p>
   </li>
 {% endfor %}
