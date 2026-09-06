@@ -1,19 +1,21 @@
 ---
 layout: default
-title: Stop Thinking of LLMs as Next-Token Predictors
+title: “Next-token predictor” is the wrong mental model for LLMs
 author: Garrin McGoldrick
 ---
 
-# Stop Thinking of LLMs as Next-Token Predictors
+# “Next-token predictor” is the wrong mental model for LLMs
 
-Strictly speaking, the statement “LLMs are next-token predictors” isn’t wrong, but it's incomplete. It's a fine zeroth-order approximation, and it is grounded in something real: transformer-based language models emit tokens autoregressively:
+*Edited September 5, 2026. [Details below.](#edit-note)*
+
+Strictly speaking, the statement “LLMs are next-token predictors” isn’t wrong, but it's incomplete. It's a fine zeroth-order approximation, and it is grounded in something real: at inference time, autoregressive language models emit tokens one at a time:
 
 ```python
 while not done:
     tokens.append(model.sample_next_token(tokens))
 ```
 
-This certainly has the *shape* of something you might call a next-token predictor. During pre-training, the model repeatedly takes some prior tokens, looks at the token that actually followed them, and makes that token more likely to be sampled next. Conceptually, the training loop looks something like this:
+This inference loop certainly has the *shape* of something you might call a next-token predictor. And if we look deeper at what happens during training, prediction is indeed what the model learns to do, at least during pre-training. The model repeatedly takes some prior tokens, looks at the token that actually followed them, and makes that token more likely to be sampled next. Conceptually, the training loop looks something like this:
 
 ```python
 for tokens in training_data:
@@ -30,7 +32,9 @@ for tokens in training_data:
 
 Crucially, every `actual_next_token` comes from an existing sequence in `training_data`. It's probably fair to say that the base model also *behaves* as a next-token predictor: it is trained to predict next tokens as they occur in its training data.
 
-But the LLMs we use are not just base models. They are post-trained, and a key part of modern post-training is reinforcement learning with verifiable rewards (RLVR). During pre-training, the model learns only from sequences that already exist in the training data. During RLVR, the model explores by generating new sequences and learning from their outcomes. Conceptually, the RLVR training loop looks something like this:
+But the LLMs we use are not just base models. They are post-trained, and a key part of modern post-training is reinforcement learning with verifiable rewards (RLVR).
+
+At inference time, the model still looks like a next-token predictor. But if we look at what happens during RLVR, there is no correct next token to predict. Instead, the model explores by generating new sequences and learning from their outcomes. Conceptually, the RLVR training loop looks something like this:
 
 ```python
 for task in training_tasks:
@@ -46,9 +50,9 @@ for task in training_tasks:
             )
 ```
 
-`make_more_likely` is doing the same kind of work in both loops, but for a fundamentally different reason. During pre-training, it makes an `actual_next_token` more likely because that token appeared in the training data. During RLVR, it makes an `explored_next_token` more likely because the explored sequence containing it earned a high reward.
+`make_more_likely` is doing the same kind of work in both loops, but for a fundamentally different reason. During pre-training, it makes an `actual_next_token` more likely because that token appeared in the training data. During RLVR, it makes an `explored_next_token` more likely because the explored sequence containing it earned a high reward. There is no next token to get right, only a reward to maximize.
 
-So while a post-trained LLM still has the *shape* of a next-token predictor, emitting tokens one at a time, it no longer learns only by predicting existing text. It also learns from new sequences produced through its own exploration.
+So while a post-trained LLM still has the *shape* of a next-token predictor at inference time, emitting tokens one at a time, during RLVR it no longer learns by predicting the next token in data, but by maximizing a reward.
 
 ## Chess Analogy
 
@@ -65,3 +69,9 @@ Calling the second system a “next-move predictor” would be strange. It is no
 I didn't touch on other post-training techniques in this post, but they matter too. Reinforcement learning from human feedback (RLHF), for example, shifts the model away from imitating its pre-training data as a whole and toward simulating a helpful assistant. And as we saw in this post, RLVR goes further still: it allows an LLM to explore and learn from ideas never seen in its training data.
 
 That is why “next-token predictor” is the wrong mental model. It describes the shape of the mechanism, one token emitted after another, while ignoring what that mechanism encodes. A simulation of a helpful assistant and knowledge discovered through exploration can both be encoded in exactly the same next-token loop.
+
+---
+
+## Edit note
+
+*September 5, 2026.* Thanks to the [Hacker News community](https://news.ycombinator.com/item?id=49567310) for the thoughtful feedback. I've adopted the title used on HN, and made small edits to clarify the distinction between inference and training, particularly how RLVR replaces predicting the next token in data with maximizing a reward.
